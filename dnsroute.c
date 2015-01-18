@@ -8,6 +8,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
 
 static pcap_t *capture_init(char *dev)
 {
@@ -188,6 +189,14 @@ static void do_for_each_ip(unsigned char* pkt, int size, struct action* info)
 	}
 }
 
+static void disable_child_wait()
+{
+	if (signal(SIGCHLD, SIG_IGN) != 0) {
+		fprintf(stderr, "Failed to set SIGCHLD\n");
+		return;
+	}
+}
+
 int main(int argc, char** argv)
 {
 	if (argc < 5) {
@@ -219,6 +228,8 @@ int main(int argc, char** argv)
 		fprintf(stderr, "capture device %s failed\n", capture_dev);
 		return 3;
 	}
+
+	disable_child_wait();
 
 	while (1) {
 		unsigned char *buf;
